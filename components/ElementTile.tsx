@@ -7,64 +7,71 @@ import { motion } from 'framer-motion';
 interface ElementTileProps {
   element: CognitiveElement;
   isSelected: boolean;
+  isRelated: boolean;
+  isDimmed: boolean;
   onToggle: (element: CognitiveElement) => void;
   onHover: (element: CognitiveElement | null) => void;
 }
 
-const ElementTile: React.FC<ElementTileProps> = ({ element, isSelected, onToggle, onHover }) => {
+const ElementTile: React.FC<ElementTileProps> = ({ element, isSelected, isRelated, isDimmed, onToggle, onHover }) => {
   const colors = GROUP_COLORS[element.group];
 
   return (
     <motion.div
       layoutId={`element-${element.symbol}`}
-      whileHover={{ scale: 1.05, zIndex: 10, y: -2 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: 1.02, zIndex: 20, y: -4 }}
+      whileTap={{ scale: 0.98 }}
       onClick={() => onToggle(element)}
       onMouseEnter={() => onHover(element)}
       onMouseLeave={() => onHover(null)}
       className={clsx(
-        "relative w-full aspect-[4/4.5] cursor-pointer transition-all duration-200",
-        "bg-white shadow-sm hover:shadow-xl rounded-sm overflow-hidden border",
-        isSelected ? `border-transparent ring-2 ring-offset-2 ${colors.active} z-10` : "border-slate-200",
-        colors.hover
+        "relative w-full aspect-[4/4.5] cursor-pointer transition-all duration-500",
+        "bg-white rounded-2xl overflow-hidden border",
+        // Selection State
+        isSelected 
+            ? `border-black ring-1 ring-black shadow-2xl z-10` 
+            : isRelated
+                ? `border-black/40 ring-1 ring-black/20 scale-[1.02] shadow-xl`
+                : "border-black/5",
+        // Dimming State
+        isDimmed && !isSelected && !isRelated ? "opacity-20 grayscale scale-95" : "opacity-100",
+        // Shadow
+        !isDimmed ? "shadow-sm hover:shadow-2xl" : "shadow-none"
       )}
     >
-      {/* Selection Background Fill */}
-      {isSelected && (
-        <div className={clsx("absolute inset-0 opacity-10", colors.bg.replace('bg-', 'bg-current '))} style={{ color: colors.hex }}></div>
-      )}
-
-      <div className="flex flex-col h-full p-2 md:p-3 justify-between relative z-10">
+      <div className="flex flex-col h-full p-4 justify-between relative z-10">
         
-        {/* Header: Atomic Number & Mass */}
-        <div className="flex justify-between items-start text-[9px] md:text-[10px] font-mono leading-none">
-          <span className="text-slate-500 font-medium">{element.atomicNumber}</span>
-          <span className="text-slate-400 font-normal">{(element.atomicNumber * 2.14).toFixed(1)}</span>
+        {/* Header: Atomic Number */}
+        <div className="flex justify-between items-start text-[10px] font-accent font-bold leading-none opacity-20">
+          <span>{element.atomicNumber.toString().padStart(2, '0')}</span>
+          <element.icon size={10} />
         </div>
 
-        {/* Center: Symbol & Icon */}
-        <div className="flex flex-col items-center justify-center flex-grow -mt-2">
+        {/* Center: Symbol */}
+        <div className="flex flex-col items-center justify-center flex-grow">
           <h2 className={clsx(
-            "text-2xl md:text-4xl font-bold font-display tracking-tight",
-            colors.primary
+            "text-4xl font-display tracking-tighter transition-colors",
+            isSelected ? "text-black" : "text-black/80"
           )}>
             {element.symbol}
           </h2>
-          <div className="mt-1 opacity-40">
-            <element.icon size={12} className={colors.primary} />
-          </div>
         </div>
 
         {/* Footer: Name */}
         <div className="text-center w-full">
-             <span className="text-[8px] md:text-[9px] uppercase tracking-wider text-slate-600 font-bold block truncate w-full">
+             <span className="text-[9px] uppercase tracking-[0.1em] text-black/40 font-accent font-bold block truncate w-full">
                 {element.name}
              </span>
         </div>
       </div>
       
-      {/* Color Stripe at bottom */}
-      <div className={clsx("absolute bottom-0 left-0 right-0 h-1.5 opacity-80", colors.bg.replace('bg-', 'bg-current'))} style={{ color: colors.hex }}></div>
+      {/* Subtle Group Indicator */}
+      <div className={clsx("absolute top-0 left-0 bottom-0 w-1 opacity-20")} style={{ backgroundColor: colors.hex }}></div>
+      
+      {/* Related Indicator */}
+      {isRelated && (
+        <div className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-black animate-pulse"></div>
+      )}
     </motion.div>
   );
 };

@@ -5,18 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PTCE Laboratory</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --bg-warm: #f5f2ed;
+        --text-ink: #1a1a1a;
+        --accent-gray: #e5e5e1;
+      }
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #f8fafc;
-        color: #1e293b;
+        background-color: var(--bg-warm);
+        color: var(--text-ink);
+        -webkit-font-smoothing: antialiased;
       }
       .font-display {
-        font-family: 'Rajdhani', sans-serif;
+        font-family: 'Abril Fatface', serif;
       }
-      .font-mono {
-        font-family: 'Share Tech Mono', monospace;
+      .font-accent {
+        font-family: 'Space Grotesk', sans-serif;
       }
       .perspective-1000 {
         perspective: 1000px;
@@ -29,23 +35,26 @@
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
-        width: 8px;
+        width: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #f1f5f9; 
+        background: var(--bg-warm); 
       }
       ::-webkit-scrollbar-thumb {
-        background: #cbd5e1; 
-        border-radius: 4px;
+        background: #d1d1cf; 
+        border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8; 
+        background: #b1b1af; 
       }
       
-      .science-grid {
-        background-image: linear-gradient(#e2e8f0 1px, transparent 1px),
-        linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
-        background-size: 40px 40px;
+      .editorial-grid {
+        background-image: radial-gradient(#d1d1cf 0.5px, transparent 0.5px);
+        background-size: 24px 24px;
+      }
+
+      .text-balance {
+        text-wrap: balance;
       }
     </style>
   <script type="importmap">
@@ -61,8 +70,10 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
-  </body>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>

@@ -15,21 +15,32 @@ export interface CognitiveElement {
   period: number;
   description: string;
   icon: LucideIcon;
+  relatedSymbols?: string[]; // For Affinity Mapping
 }
 
 export interface SynthesisResult {
+  id?: string; // For notebook persistence
   name: string;
   formula: string;
   description: string;
+  useCase: string; // Real-world fictitious example
   stability: number; // 0-100
   type: 'Archetype' | 'Phenomenon' | 'Paradox' | 'Compound';
+  timestamp?: number;
 }
 
 export interface DiagnosisResult {
-  summary: string;
+  title: string; // Short 3-5 word diagnostic title
+  assessment: string; // Detailed analysis (The "Summary Assessment")
+  recommendation: string; // Actionable next steps
   elements: {
     symbol: string;
     confidence: number;
     reasoning: string;
   }[];
+}
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  content: string;
 }

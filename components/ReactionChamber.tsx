@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { CognitiveElement, SynthesisResult, DiagnosisResult } from '../types';
-import { synthesizeMolecule, diagnoseScenario } from '../services/geminiService';
-import { FlaskConical, Microscope, Info, Atom, Zap, RefreshCw, Undo2, Redo2, ScanLine, BrainCircuit, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CognitiveElement, SynthesisResult, DiagnosisResult, ChatMessage } from '../types';
+import { synthesizeMolecule, diagnoseScenario, chatWithArchetype } from '../services/geminiService';
+import { FlaskConical, Microscope, Info, Atom, Zap, RefreshCw, Undo2, Redo2, ScanLine, BrainCircuit, ArrowRight, Loader2, ClipboardList, Lightbulb, Stethoscope, Dices, BookOpen, Save, Trash2, MessageSquare, Send, User, Bot, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { GROUP_COLORS, ELEMENTS } from '../constants';
@@ -23,10 +23,11 @@ const RECIPES = [
     symbol: 'Ec',
     formula: 'Cb + Sp + Ig',
     description: "A hermetically sealed belief system. Confirmation Bias filters data, Social Proof validates it, and In-Group Bias demonizes outsiders.",
+    useCase: "A political subgroup on social media that bans dissenting voices and amplifies only news that aligns with their pre-existing narrative.",
     elements: ['Cb', 'Sp', 'Ig'],
     stability: 85,
     type: 'Phenomenon',
-    color: 'purple'
+    color: 'black'
   },
   {
     id: 'panic_selling',
@@ -34,10 +35,11 @@ const RECIPES = [
     symbol: 'Mc',
     formula: 'La + Av + Sp',
     description: "A cascade of irrational selling. Loss Aversion triggers fear, Availability (recent news) amplifies it, and Social Proof (others selling) confirms the exit.",
+    useCase: "Investors mass-selling a stable stock during a minor dip because they saw a sensationalized news headline and watched the ticker drop.",
     elements: ['La', 'Av', 'Sp'],
     stability: 10,
     type: 'Phenomenon',
-    color: 'rose'
+    color: 'black'
   },
   {
     id: 'conspiracy',
@@ -45,42 +47,68 @@ const RECIPES = [
     symbol: 'Ct',
     formula: 'Ap + Cb + Dk',
     description: "Seeing patterns where none exist reinforced by Confirmation Bias, driven by Dunning-Kruger (overconfidence in hidden knowledge).",
+    useCase: "A person convinced that a mundane coincidence is proof of a grand global plot, dismissing expert explanations as part of the 'cover-up'.",
     elements: ['Fr', 'Cb', 'Dk'], 
     stability: 60,
     type: 'Archetype',
-    color: 'amber'
+    color: 'black'
   }
 ];
 
 const MoleculeVisualizer: React.FC<{ result: SynthesisResult }> = ({ result }) => {
-    const coreColor = result.stability > 60 ? 'bg-purple-500' : result.stability > 30 ? 'bg-amber-500' : 'bg-rose-500';
-    const glowColor = result.stability > 60 ? 'shadow-purple-300' : result.stability > 30 ? 'shadow-amber-300' : 'shadow-rose-300';
-
+    const stabilityFactor = result.stability / 100;
+    
     return (
-        <div className="relative w-48 h-48 flex items-center justify-center perspective-1000">
+        <div className="relative w-64 h-64 flex items-center justify-center z-0">
+             {/* Atmospheric Glow */}
+             <motion.div
+                animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.1, 0.2, 0.1],
+                }}
+                transition={{ 
+                    duration: 4,
+                    repeat: Infinity, 
+                    ease: "easeInOut" 
+                }}
+                className="absolute inset-0 rounded-full bg-black blur-[80px] -z-10"
+             />
+
             <motion.div 
-                animate={{ rotateY: 360, rotateX: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="relative w-32 h-32 preserve-3d"
+                animate={{ y: [-4, 4, -4] }}
+                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                className="relative w-48 h-48 flex items-center justify-center"
             >
-                <div className={clsx("absolute inset-0 m-auto w-12 h-12 rounded-full shadow-[0_0_40px] z-10", coreColor, glowColor)}>
-                     <div className="absolute inset-0 bg-white opacity-20 rounded-full animate-pulse"></div>
-                </div>
-                {[0, 60, 120].map((deg, i) => (
-                    <div key={i} className="absolute inset-0 m-auto w-full h-full border-2 border-slate-300/30 rounded-full" 
-                         style={{ transform: `rotate(${deg}deg)` }}>
-                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-indigo-400 rounded-full shadow-lg"></div>
-                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-sky-300 rounded-full shadow-lg"></div>
+                {/* Minimalist Core */}
+                <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute w-24 h-24 rounded-full border border-black/10 flex items-center justify-center bg-white shadow-2xl"
+                >
+                    <div className="w-16 h-16 rounded-full border border-black/5 flex items-center justify-center">
+                         <span className="text-3xl font-display text-black">{result.symbol || result.name.substring(0,2).toUpperCase()}</span>
                     </div>
-                ))}
-                <div className="absolute inset-0 m-auto w-1 h-32 bg-slate-300/20 rotate-45"></div>
-                <div className="absolute inset-0 m-auto w-32 h-1 bg-slate-300/20 -rotate-45"></div>
+                </motion.div>
+
+                {/* Concentric Rings */}
+                <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute w-40 h-40 border border-black/5 rounded-full"
+                />
+                <motion.div 
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                    className="absolute w-48 h-48 border border-black/5 rounded-full border-dashed"
+                />
+                
+                {/* Stability Indicator */}
+                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                    <span className="text-[10px] font-accent font-bold tracking-[0.2em] uppercase text-black/20">
+                        Stability Index: {result.stability}%
+                    </span>
+                </div>
             </motion.div>
-            
-            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white/90 backdrop-blur border border-slate-200 px-3 py-1 rounded-full shadow-sm">
-                <span className="text-xs font-mono font-bold text-slate-600">{result.symbol || result.name.substring(0,2).toUpperCase()}</span>
-                <span className="text-[10px] text-slate-400 ml-2">RATIONALITY: {result.stability}%</span>
-            </div>
         </div>
     );
 };
@@ -94,42 +122,91 @@ const ReactionChamber: React.FC<ReactionChamberProps> = ({
   canUndo,
   canRedo
 }) => {
-  const [activeTab, setActiveTab] = useState<'synthesis' | 'diagnosis'>('synthesis');
+  const [activeTab, setActiveTab] = useState<'synthesis' | 'diagnosis' | 'notebook'>('synthesis');
   const [synthesisResult, setSynthesisResult] = useState<SynthesisResult | null>(null);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   
+  // Notebook State
+  const [savedResults, setSavedResults] = useState<SynthesisResult[]>([]);
+
   // Diagnosis State
   const [scenarioInput, setScenarioInput] = useState('');
   const [diagnosisResult, setDiagnosisResult] = useState<DiagnosisResult | null>(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
 
+  // Chat State
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isChatTyping, setIsChatTyping] = useState(false);
+
+  // Load Notebook from LocalStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('ptce_notebook');
+    if (saved) {
+      try {
+        setSavedResults(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to load notebook", e);
+      }
+    }
+  }, []);
+
+  const saveToNotebook = (result: SynthesisResult) => {
+    const entry = { ...result, id: crypto.randomUUID(), timestamp: Date.now() };
+    const updated = [entry, ...savedResults];
+    setSavedResults(updated);
+    localStorage.setItem('ptce_notebook', JSON.stringify(updated));
+  };
+
+  const deleteFromNotebook = (id: string) => {
+    const updated = savedResults.filter(r => r.id !== id);
+    setSavedResults(updated);
+    localStorage.setItem('ptce_notebook', JSON.stringify(updated));
+  };
+
   // --- Synthesis Logic ---
-  const handleSynthesize = async () => {
+  const performSynthesis = async (elementsToSynthesize: CognitiveElement[]) => {
+      setIsSynthesizing(true);
+      setSynthesisResult(null);
+      setIsChatOpen(false); // Reset chat
+
+      const symbols = elementsToSynthesize.map(e => e.symbol).sort();
+      const match = RECIPES.find(r => {
+          const recipeSymbols = [...r.elements].sort();
+          return JSON.stringify(symbols) === JSON.stringify(recipeSymbols);
+      });
+
+      // Min delay for UX
+      setTimeout(async () => {
+          if (match) {
+              setSynthesisResult({
+                name: match.name,
+                formula: match.formula,
+                description: match.description,
+                useCase: match.useCase,
+                stability: match.stability,
+                type: match.type as 'Archetype'
+              });
+          } else {
+              const geminiResult = await synthesizeMolecule(elementsToSynthesize);
+              setSynthesisResult(geminiResult);
+          }
+          setIsSynthesizing(false);
+      }, 1500);
+  };
+
+  const handleSynthesize = () => {
     if (selectedElements.length === 0) return;
-    setIsSynthesizing(true);
-    setSynthesisResult(null);
+    performSynthesis(selectedElements);
+  };
 
-    const symbols = selectedElements.map(e => e.symbol).sort();
-    const match = RECIPES.find(r => {
-        const recipeSymbols = [...r.elements].sort();
-        return JSON.stringify(symbols) === JSON.stringify(recipeSymbols);
-    });
-
-    setTimeout(async () => {
-        if (match) {
-            setSynthesisResult({
-              name: match.name,
-              formula: match.formula,
-              description: match.description,
-              stability: match.stability,
-              type: match.type as 'Archetype'
-            });
-        } else {
-            const geminiResult = await synthesizeMolecule(selectedElements);
-            setSynthesisResult(geminiResult);
-        }
-        setIsSynthesizing(false);
-    }, 2000);
+  const handleWildCard = () => {
+    const count = Math.floor(Math.random() * 3) + 2; 
+    const shuffled = [...ELEMENTS].sort(() => 0.5 - Math.random());
+    const randomSelection = shuffled.slice(0, count);
+    onSetElements(randomSelection);
+    performSynthesis(randomSelection);
   };
 
   const loadPreset = (recipeId: string) => {
@@ -147,7 +224,6 @@ const ReactionChamber: React.FC<ReactionChamberProps> = ({
     setIsDiagnosing(true);
     setDiagnosisResult(null);
     
-    // Artificial delay for UX
     setTimeout(async () => {
       const result = await diagnoseScenario(scenarioInput);
       setDiagnosisResult(result);
@@ -164,119 +240,185 @@ const ReactionChamber: React.FC<ReactionChamberProps> = ({
     setActiveTab('synthesis');
   };
 
+  // --- Chat Logic ---
+  const handleChatOpen = () => {
+      if (!synthesisResult) return;
+      setIsChatOpen(true);
+      setChatHistory([
+          { role: 'model', content: `I am ${synthesisResult.name}. You may question my logic.` }
+      ]);
+  };
+
+  const handleChatSend = async () => {
+      if (!chatInput.trim() || !synthesisResult) return;
+      
+      const userMsg: ChatMessage = { role: 'user', content: chatInput };
+      const updatedHistory = [...chatHistory, userMsg];
+      setChatHistory(updatedHistory);
+      setChatInput('');
+      setIsChatTyping(true);
+
+      const responseText = await chatWithArchetype(updatedHistory, synthesisResult);
+      
+      setIsChatTyping(false);
+      setChatHistory([...updatedHistory, { role: 'model', content: responseText }]);
+  };
+
   return (
-    <div className="flex flex-col gap-6 h-full">
+    <div className="flex flex-col gap-8 h-full">
       {/* Main Container */}
-      <div className="w-full flex-grow flex flex-col relative bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl shadow-slate-200/50">
+      <div className="w-full flex-grow flex flex-col relative bg-white rounded-[32px] overflow-hidden shadow-2xl shadow-black/5 border border-black/5">
           
           {/* Tab Header */}
-          <div className="flex border-b border-slate-100 bg-slate-50/80 backdrop-blur z-20">
+          <div className="flex bg-[#f5f2ed]/50 backdrop-blur z-20">
               <button 
                 onClick={() => setActiveTab('synthesis')}
                 className={clsx(
-                  "flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors relative",
-                  activeTab === 'synthesis' ? "text-indigo-600 bg-white" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                  "flex-1 py-4 text-[10px] font-accent font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all relative",
+                  activeTab === 'synthesis' ? "text-black bg-white" : "text-black/30 hover:text-black/60 hover:bg-white/50"
                 )}
               >
-                 <FlaskConical size={14} />
                  Synthesis
-                 {activeTab === 'synthesis' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"></div>}
+                 {activeTab === 'synthesis' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></div>}
               </button>
-              <div className="w-px bg-slate-200"></div>
               <button 
                 onClick={() => setActiveTab('diagnosis')}
                 className={clsx(
-                  "flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors relative",
-                  activeTab === 'diagnosis' ? "text-indigo-600 bg-white" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                  "flex-1 py-4 text-[10px] font-accent font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all relative",
+                  activeTab === 'diagnosis' ? "text-black bg-white" : "text-black/30 hover:text-black/60 hover:bg-white/50"
                 )}
               >
-                 <BrainCircuit size={14} />
                  Diagnosis
-                 {activeTab === 'diagnosis' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"></div>}
+                 {activeTab === 'diagnosis' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></div>}
+              </button>
+              <button 
+                onClick={() => setActiveTab('notebook')}
+                className={clsx(
+                  "flex-1 py-4 text-[10px] font-accent font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all relative",
+                  activeTab === 'notebook' ? "text-black bg-white" : "text-black/30 hover:text-black/60 hover:bg-white/50"
+                )}
+              >
+                 Notebook
+                 {activeTab === 'notebook' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></div>}
               </button>
           </div>
 
           {/* TAB 1: SYNTHESIS CONTENT */}
           {activeTab === 'synthesis' && (
              <>
-               <div className="px-4 py-2 border-b border-slate-100 bg-white flex justify-between items-center z-20 h-10">
-                  <div className="flex items-center gap-2">
-                    <span className={clsx("w-1.5 h-1.5 rounded-full", isSynthesizing ? "bg-amber-400 animate-pulse" : "bg-emerald-400")}></span>
-                    <span className="text-[10px] font-mono text-slate-400">{isSynthesizing ? 'ACTIVE' : 'READY'}</span>
-                  </div>
-               </div>
-
-               <div className="flex-grow relative flex flex-col items-center justify-center p-6 min-h-[360px] bg-gradient-to-b from-white to-slate-50">
-                  <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-
+               <div className="flex-grow relative flex flex-col items-center justify-center p-8 min-h-[450px]">
                   <AnimatePresence mode="wait">
                       {isSynthesizing ? (
-                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center gap-8 z-10 w-full">
-                              <div className="relative w-40 h-40 flex items-center justify-center">
-                                  <div className="absolute w-4 h-4 bg-indigo-600 rounded-full animate-ping opacity-20"></div>
-                                  {selectedElements.map((el, i) => (
-                                      <motion.div
-                                        key={el.symbol}
-                                        initial={{ scale: 1, x: 0, y: 0 }}
-                                        animate={{ rotate: 360, scale: [1, 0.5, 0], opacity: [1, 1, 0], x: [0, 0], y: [0, 0] }}
-                                        transition={{ duration: 1.8, ease: "easeInOut" }}
-                                        className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-white shadow-lg border-2 border-indigo-100 flex items-center justify-center text-xs font-bold text-slate-600 z-10"
-                                        style={{ transformOrigin: `${50 + Math.cos(i) * 60}px ${50 + Math.sin(i) * 60}px` }}
-                                      >
-                                          {el.symbol}
-                                      </motion.div>
-                                  ))}
-                                  <div className="absolute inset-0 border-2 border-indigo-500/20 rounded-full animate-[spin_3s_linear_infinite]"></div>
-                                  <div className="absolute inset-2 border border-indigo-500/10 rounded-full animate-[spin_2s_linear_infinite_reverse]"></div>
+                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center gap-12 z-10 w-full">
+                              <div className="relative w-48 h-48 flex items-center justify-center">
+                                  <div className="absolute w-full h-full border border-black/5 rounded-full animate-[spin_10s_linear_infinite]"></div>
+                                  <div className="absolute w-3/4 h-3/4 border border-black/10 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
+                                  <FlaskConical size={40} className="text-black/20 animate-pulse" />
                               </div>
-                              <p className="text-slate-400 font-mono text-xs tracking-widest animate-pulse">ANALYZING INTERACTION...</p>
+                              <p className="text-black/30 font-accent font-bold text-[10px] tracking-[0.3em] uppercase animate-pulse">Synthesizing Archetype...</p>
                           </motion.div>
                       ) : synthesisResult ? (
-                          <motion.div key="result" initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="flex flex-col items-center text-center z-10 w-full">
+                          <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center z-10 w-full relative">
+                              
+                              {/* Chat Interface Overlay */}
+                              {isChatOpen && (
+                                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="absolute inset-0 z-50 bg-white/98 backdrop-blur-xl rounded-2xl flex flex-col p-6 border border-black/5 shadow-2xl">
+                                      <div className="flex justify-between items-center mb-6">
+                                          <h3 className="font-display text-xl">Interrogation</h3>
+                                          <button onClick={() => setIsChatOpen(false)} className="text-black/20 hover:text-black"><X size={20} /></button>
+                                      </div>
+                                      <div className="flex-grow overflow-y-auto space-y-4 mb-6 pr-2 scrollbar-thin">
+                                          {chatHistory.map((msg, i) => (
+                                              <div key={i} className={clsx("flex flex-col gap-1 text-left", msg.role === 'user' ? "items-end" : "items-start")}>
+                                                  <span className="text-[9px] font-accent font-bold uppercase tracking-widest opacity-30">{msg.role === 'user' ? 'Inquirer' : synthesisResult.name}</span>
+                                                  <div className={clsx("p-4 rounded-2xl text-sm max-w-[90%] leading-relaxed", msg.role === 'user' ? "bg-black text-white" : "bg-[#f5f2ed] text-black")}>
+                                                      {msg.content}
+                                                  </div>
+                                              </div>
+                                          ))}
+                                          {isChatTyping && <div className="text-[10px] font-accent font-bold text-black/20 tracking-widest animate-pulse">Analyzing...</div>}
+                                      </div>
+                                      <div className="flex gap-3">
+                                          <input 
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleChatSend()}
+                                            placeholder="Question the logic..."
+                                            className="flex-grow text-sm p-4 bg-[#f5f2ed] rounded-2xl focus:outline-none focus:ring-1 focus:ring-black/10"
+                                            autoFocus
+                                          />
+                                          <button onClick={handleChatSend} className="p-4 bg-black text-white rounded-2xl hover:bg-black/80 transition-colors"><Send size={18} /></button>
+                                      </div>
+                                  </motion.div>
+                              )}
+
                               <MoleculeVisualizer result={synthesisResult} />
-                              <div className="mt-6 w-full max-w-sm">
-                                  <h2 className="text-2xl font-bold text-slate-800 font-display mb-1">{synthesisResult.name}</h2>
-                                  <div className="flex items-center justify-center gap-2 mb-4 bg-slate-100/50 py-1 px-3 rounded-lg mx-auto w-fit border border-slate-200/50">
-                                       <span className="font-serif italic text-slate-500 text-lg">f</span>
-                                       <span className="text-indigo-600 font-mono font-medium">{synthesisResult.formula}</span>
+                              <div className="mt-8 w-full">
+                                  <h2 className="text-4xl font-display text-black mb-2">{synthesisResult.name}</h2>
+                                  <div className="text-[11px] font-accent font-bold tracking-[0.2em] uppercase opacity-30 mb-6">{synthesisResult.formula}</div>
+                                  
+                                  <div className="space-y-6 text-left max-w-sm mx-auto">
+                                      <p className="text-sm text-black/60 leading-relaxed text-center">{synthesisResult.description}</p>
+                                      
+                                      <div className="bg-[#f5f2ed] rounded-2xl p-6 border border-black/5">
+                                           <p className="text-xs text-black/80 leading-relaxed italic text-center">
+                                              "{synthesisResult.useCase}"
+                                           </p>
+                                      </div>
                                   </div>
-                                  <p className="text-slate-600 text-sm leading-relaxed font-sans border-t border-slate-100 pt-4">{synthesisResult.description}</p>
-                                  <div className="mt-2 text-xs font-mono text-slate-400">TYPE: {synthesisResult.type.toUpperCase()}</div>
+
+                                  <div className="mt-8 flex gap-3 justify-center">
+                                      <button 
+                                        onClick={handleChatOpen}
+                                        className="px-6 py-3 bg-black text-white text-[10px] font-accent font-bold uppercase tracking-widest rounded-full hover:bg-black/80 transition-all"
+                                      >
+                                          Interrogate
+                                      </button>
+                                      <button 
+                                        onClick={() => saveToNotebook(synthesisResult)}
+                                        className="px-6 py-3 bg-white border border-black/10 text-black text-[10px] font-accent font-bold uppercase tracking-widest rounded-full hover:bg-[#f5f2ed] transition-all"
+                                      >
+                                          Save Artifact
+                                      </button>
+                                  </div>
                               </div>
                           </motion.div>
                       ) : (
                           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center w-full h-full">
                                {selectedElements.length > 0 ? (
-                                   <div className="flex flex-col items-center gap-8 w-full z-10">
-                                       <div className="flex gap-4 justify-center flex-wrap">
-                                          {selectedElements.map((el, idx) => {
-                                              const colors = GROUP_COLORS[el.group];
-                                              return (
-                                                  <motion.div layoutId={`element-${el.symbol}`} key={idx} className={clsx("w-16 h-16 rounded-xl border-2 flex flex-col items-center justify-center relative shadow-sm bg-white", colors.border)}>
-                                                      <span className={clsx("text-xl font-bold font-display", colors.primary)}>{el.symbol}</span>
-                                                      <div className={clsx("absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white", colors.bg.replace('bg-', 'bg-slate-800/'))} style={{backgroundColor: colors.hex}}>{el.atomicNumber}</div>
-                                                  </motion.div>
-                                              )
-                                          })}
+                                   <div className="flex flex-col items-center gap-12 w-full z-10">
+                                       <div className="flex gap-6 justify-center flex-wrap">
+                                          {selectedElements.map((el, idx) => (
+                                              <motion.div layoutId={`element-${el.symbol}`} key={idx} className="w-20 h-20 rounded-3xl border border-black/5 flex flex-col items-center justify-center relative shadow-xl bg-white">
+                                                  <span className="text-2xl font-display text-black">{el.symbol}</span>
+                                                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-accent font-bold text-white bg-black">{el.atomicNumber}</div>
+                                              </motion.div>
+                                          ))}
                                        </div>
                                        {selectedElements.length > 1 && (
-                                         <button onClick={handleSynthesize} className="group relative flex items-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-full shadow-lg shadow-indigo-200 transition-all overflow-hidden">
-                                              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                                              <Zap size={16} className={isSynthesizing ? "animate-bounce" : ""} />
-                                              <span className="relative">Simulate Behavior</span>
+                                         <button onClick={handleSynthesize} className="group relative flex items-center gap-3 px-10 py-4 bg-black text-white text-[11px] font-accent font-bold uppercase tracking-[0.2em] rounded-full shadow-2xl hover:scale-105 transition-all">
+                                              <Zap size={16} />
+                                              <span>Simulate Logic</span>
                                          </button>
                                        )}
                                    </div>
                                ) : (
-                                  <div className="text-center space-y-4 max-w-xs z-10">
-                                      <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mx-auto relative overflow-hidden">
-                                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-50 to-transparent"></div>
-                                        <Atom className="text-slate-300 relative z-10" size={40} />
+                                  <div className="text-center space-y-6 max-w-xs z-10 flex flex-col items-center">
+                                      <div className="w-24 h-24 bg-[#f5f2ed] rounded-full flex items-center justify-center mx-auto relative group overflow-hidden">
+                                        <Atom className="text-black/10 group-hover:rotate-180 transition-transform duration-1000" size={48} />
                                       </div>
                                       <div>
-                                          <p className="text-base font-bold text-slate-700 font-display">Behavioral Lab</p>
-                                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">Combine biases to generate personality archetypes or market scenarios.</p>
+                                          <p className="text-2xl font-display text-black">The Logic Ledger</p>
+                                          <p className="text-xs text-black/40 mt-2 leading-relaxed">Combine heuristic elements to document the ephemeral glass of institutional logic.</p>
                                       </div>
+                                      
+                                      <button 
+                                        onClick={handleWildCard}
+                                        className="mt-4 px-6 py-3 bg-white border border-black/10 text-black/40 text-[10px] font-accent font-bold uppercase tracking-widest rounded-full hover:text-black hover:border-black transition-all flex items-center gap-2"
+                                      >
+                                          <Dices size={14} />
+                                          Wild Card
+                                      </button>
                                   </div>
                                )}
                           </motion.div>
@@ -286,15 +428,15 @@ const ReactionChamber: React.FC<ReactionChamberProps> = ({
 
                {/* Footer Controls */}
                {(selectedElements.length > 0 || canUndo) && (
-                  <div className="px-4 py-3 border-t border-slate-100 bg-slate-50 flex justify-between items-center z-20">
-                      <div className="flex items-center gap-2">
-                         <div className="flex items-center gap-1 pr-2 border-r border-slate-200 mr-2">
-                            <button disabled={!canUndo} onClick={onUndo} className="p-1.5 text-slate-400 hover:text-indigo-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors rounded-md hover:bg-slate-100"><Undo2 size={14} /></button>
-                            <button disabled={!canRedo} onClick={onRedo} className="p-1.5 text-slate-400 hover:text-indigo-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors rounded-md hover:bg-slate-100"><Redo2 size={14} /></button>
-                         </div>
-                         <button disabled={selectedElements.length === 0} onClick={onClear} className="text-xs font-semibold text-rose-500 hover:text-rose-600 disabled:opacity-30 flex items-center gap-1.5 transition-colors"><RefreshCw size={12} /> Reset</button>
+                  <div className="px-8 py-6 border-t border-black/5 bg-[#f5f2ed]/30 flex justify-between items-center z-20">
+                      <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2 pr-4 border-r border-black/5">
+                             <button disabled={!canUndo} onClick={onUndo} className="p-2 text-black/20 hover:text-black disabled:opacity-10 transition-colors"><Undo2 size={16} /></button>
+                             <button disabled={!canRedo} onClick={onRedo} className="p-2 text-black/20 hover:text-black disabled:opacity-10 transition-colors"><Redo2 size={16} /></button>
+                          </div>
+                          <button disabled={selectedElements.length === 0} onClick={onClear} className="text-[10px] font-accent font-bold uppercase tracking-widest text-black/30 hover:text-black disabled:opacity-10 transition-colors">Reset</button>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-400 bg-white border border-slate-200 px-2 py-1 rounded">LOAD: {selectedElements.length}/4</span>
+                      <span className="text-[10px] font-accent font-bold tracking-widest text-black/20 uppercase">Load: {selectedElements.length}/4</span>
                   </div>
                )}
              </>
@@ -302,82 +444,70 @@ const ReactionChamber: React.FC<ReactionChamberProps> = ({
 
           {/* TAB 2: DIAGNOSIS CONTENT */}
           {activeTab === 'diagnosis' && (
-             <div className="flex-grow flex flex-col h-full bg-slate-50/30">
-                {/* Input Area */}
-                <div className="p-4 border-b border-slate-100 bg-white z-10">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                        Describe Scenario
+             <div className="flex-grow flex flex-col h-full">
+                <div className="p-8 border-b border-black/5">
+                    <label className="text-[10px] font-accent font-bold text-black/20 uppercase tracking-[0.2em] mb-4 block">
+                        Scenario Input
                     </label>
                     <div className="relative">
                         <textarea
                             value={scenarioInput}
                             onChange={(e) => setScenarioInput(e.target.value)}
-                            placeholder="E.g., 'We keep funding this project even though it's failing because we already spent so much money on it...'"
-                            className="w-full text-xs p-3 h-24 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none resize-none font-medium text-slate-600 placeholder:text-slate-400"
+                            placeholder="Describe the path from heuristic to clarity..."
+                            className="w-full text-sm p-6 h-32 bg-[#f5f2ed] rounded-3xl focus:outline-none focus:ring-1 focus:ring-black/10 outline-none resize-none font-medium text-black placeholder:text-black/20 transition-all"
                         />
                         <button 
                             onClick={handleDiagnose}
                             disabled={!scenarioInput.trim() || isDiagnosing}
-                            className="absolute bottom-2 right-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white text-[10px] font-bold rounded flex items-center gap-1.5 transition-all shadow-sm"
+                            className="absolute bottom-4 right-4 px-6 py-3 bg-black text-white text-[10px] font-accent font-bold uppercase tracking-widest rounded-full hover:bg-black/80 transition-all shadow-xl"
                         >
-                            {isDiagnosing ? <Loader2 size={10} className="animate-spin" /> : <ScanLine size={10} />}
-                            ANALYZE
+                            {isDiagnosing ? <Loader2 size={14} className="animate-spin" /> : 'Analyze'}
                         </button>
                     </div>
                 </div>
                 
-                {/* Results Area */}
-                <div className="flex-grow p-4 overflow-y-auto min-h-[300px] relative">
+                <div className="flex-grow p-8 overflow-y-auto min-h-[300px] relative">
                     <AnimatePresence mode="wait">
                         {isDiagnosing ? (
-                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full gap-3">
-                                 <ScanLine size={40} className="text-indigo-300 animate-pulse" />
-                                 <p className="text-xs font-mono text-slate-400 animate-pulse">REVERSE ENGINEERING BEHAVIOR...</p>
+                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full gap-4">
+                                 <ScanLine size={40} className="text-black/10 animate-pulse" />
+                                 <p className="text-[10px] font-accent font-bold text-black/20 tracking-[0.3em] uppercase animate-pulse">Mapping Vulnerabilities...</p>
                              </motion.div>
                         ) : diagnosisResult ? (
-                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                                 <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
-                                     <h3 className="text-[10px] font-bold text-indigo-800 uppercase tracking-widest mb-1 flex items-center gap-2">
-                                        <Info size={12} /> Clinical Summary
-                                     </h3>
-                                     <p className="text-xs text-indigo-900 leading-relaxed font-medium">
-                                        "{diagnosisResult.summary}"
+                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                                 <div className="p-8 bg-[#f5f2ed] rounded-[32px] border border-black/5">
+                                     <h3 className="text-2xl font-display mb-4">{diagnosisResult.title}</h3>
+                                     <p className="text-sm text-black/60 leading-relaxed">
+                                        {diagnosisResult.assessment}
                                      </p>
                                  </div>
                                  
-                                 <div className="space-y-2">
-                                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Detected Elements</h3>
+                                 <div className="space-y-4">
+                                     <h3 className="text-[10px] font-accent font-bold text-black/20 uppercase tracking-[0.2em] px-2">
+                                         Detected Signatures
+                                     </h3>
                                      {diagnosisResult.elements.map((el, i) => {
                                          const elementDef = ELEMENTS.find(e => e.symbol === el.symbol);
                                          if (!elementDef) return null;
-                                         const colors = GROUP_COLORS[elementDef.group];
 
                                          return (
                                              <motion.div 
                                                 key={el.symbol} 
-                                                initial={{ opacity: 0, x: -10 }} 
-                                                animate={{ opacity: 1, x: 0 }} 
+                                                initial={{ opacity: 0, y: 10 }} 
+                                                animate={{ opacity: 1, y: 0 }} 
                                                 transition={{ delay: i * 0.1 }}
-                                                className="bg-white border border-slate-200 p-3 rounded-lg shadow-sm flex items-start gap-3"
+                                                className="bg-white border border-black/5 p-6 rounded-3xl flex items-start gap-6 shadow-sm hover:shadow-xl transition-all group"
                                              >
-                                                <div className={clsx("w-10 h-10 rounded border-2 flex items-center justify-center flex-shrink-0 bg-slate-50", colors.border)}>
-                                                    <span className={clsx("text-lg font-bold font-display", colors.primary)}>{el.symbol}</span>
+                                                <div className="w-14 h-14 rounded-2xl border border-black/5 flex items-center justify-center flex-shrink-0 bg-[#f5f2ed] group-hover:bg-black group-hover:text-white transition-all">
+                                                    <span className="text-xl font-display">{el.symbol}</span>
                                                 </div>
-                                                <div className="flex-grow">
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        <span className="text-xs font-bold text-slate-700">{elementDef.name}</span>
-                                                        <span className="text-[10px] font-mono font-bold text-slate-400">{el.confidence}% MATCH</span>
+                                                <div className="flex-grow min-w-0">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-sm font-bold text-black">{elementDef.name}</span>
+                                                        <span className="text-[10px] font-accent font-bold text-black/20">{el.confidence}%</span>
                                                     </div>
-                                                    <div className="w-full h-1.5 bg-slate-100 rounded-full mb-2 overflow-hidden">
-                                                        <motion.div 
-                                                            initial={{ width: 0 }} 
-                                                            animate={{ width: `${el.confidence}%` }} 
-                                                            className={clsx("h-full rounded-full", colors.bg.replace('bg-', 'bg-'))} 
-                                                            style={{ backgroundColor: colors.hex }}
-                                                        ></motion.div>
-                                                    </div>
-                                                    <p className="text-[10px] text-slate-500 leading-snug italic">
-                                                        {el.reasoning}
+                                                    <p className="text-xs text-black/40 leading-relaxed italic">
+                                                        "{el.reasoning}"
                                                     </p>
                                                 </div>
                                              </motion.div>
@@ -387,19 +517,19 @@ const ReactionChamber: React.FC<ReactionChamberProps> = ({
 
                                  <button 
                                     onClick={loadDiagnosisToChamber}
-                                    className="w-full py-3 mt-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg shadow-lg shadow-slate-200 flex items-center justify-center gap-2 transition-all"
+                                    className="w-full py-4 bg-black text-white text-[11px] font-accent font-bold uppercase tracking-[0.2em] rounded-full shadow-2xl hover:scale-[1.02] transition-all"
                                  >
-                                    Load into Simulator <ArrowRight size={12} />
+                                    Load into Simulator
                                  </button>
                              </motion.div>
                         ) : (
-                             <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                                 <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                                     <BrainCircuit size={32} className="text-slate-300" />
+                             <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                                 <div className="w-20 h-20 bg-[#f5f2ed] rounded-full flex items-center justify-center mb-6">
+                                     <BrainCircuit size={32} className="text-black/10" />
                                  </div>
-                                 <h3 className="text-sm font-bold text-slate-600">Reverse Engineering Mode</h3>
-                                 <p className="text-xs text-slate-400 mt-2 leading-relaxed max-w-[240px]">
-                                     Enter a real-world scenario to detect active biases and potential cognitive distortions.
+                                 <h3 className="text-xl font-display">Diagnostic Protocol</h3>
+                                 <p className="text-xs text-black/40 mt-3 leading-relaxed max-w-[240px]">
+                                     Enter a real-world scenario to detect active signatures and receive behavioral science-informed interventions.
                                  </p>
                              </div>
                         )}
@@ -407,45 +537,74 @@ const ReactionChamber: React.FC<ReactionChamberProps> = ({
                 </div>
              </div>
           )}
+
+          {/* TAB 3: NOTEBOOK CONTENT */}
+          {activeTab === 'notebook' && (
+              <div className="flex-grow flex flex-col h-full bg-[#f5f2ed]/30 overflow-y-auto p-8">
+                  {savedResults.length > 0 ? (
+                      <div className="space-y-4">
+                          {savedResults.map(entry => (
+                              <div key={entry.id} className="bg-white border border-black/5 rounded-[32px] p-8 shadow-sm hover:shadow-2xl transition-all relative group">
+                                  <div className="flex justify-between items-start mb-4">
+                                      <div>
+                                          <h3 className="text-2xl font-display text-black">{entry.name}</h3>
+                                          <div className="text-[10px] font-accent font-bold text-black/20 uppercase tracking-widest mt-1">
+                                              {entry.formula} // {new Date(entry.timestamp || Date.now()).toLocaleDateString()}
+                                          </div>
+                                      </div>
+                                      <button 
+                                        onClick={() => deleteFromNotebook(entry.id!)}
+                                        className="text-black/10 hover:text-black transition-colors p-2"
+                                      >
+                                          <Trash2 size={18} />
+                                      </button>
+                                  </div>
+                                  <p className="text-xs text-black/60 leading-relaxed mb-6 line-clamp-2">
+                                      {entry.description}
+                                  </p>
+                                  <button 
+                                    onClick={() => {
+                                        setSynthesisResult(entry);
+                                        setActiveTab('synthesis');
+                                    }}
+                                    className="w-full py-3 bg-[#f5f2ed] hover:bg-black hover:text-white text-black text-[10px] font-accent font-bold uppercase tracking-widest rounded-full transition-all"
+                                  >
+                                      Load Artifact
+                                  </button>
+                              </div>
+                          ))}
+                      </div>
+                  ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-center text-black/20">
+                          <ClipboardList size={48} className="mb-4 opacity-10" />
+                          <p className="text-[10px] font-accent font-bold uppercase tracking-widest">No Artifacts Saved</p>
+                      </div>
+                  )}
+              </div>
+          )}
       </div>
 
       {/* Standard Compounds / Scenarios (Shared or Context Aware) */}
       {activeTab === 'synthesis' && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
-               <Info size={14} className="text-indigo-500" />
-               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Standard Phenomena</h3>
+        <div className="bg-white rounded-[32px] p-8 shadow-2xl shadow-black/5 border border-black/5">
+          <div className="flex items-center gap-3 mb-8 pb-4 border-b border-black/5">
+               <h3 className="text-[10px] font-accent font-bold uppercase tracking-[0.2em] text-black/30">Standard Phenomena</h3>
           </div>
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 gap-4">
                {RECIPES.map(recipe => (
                    <button 
                       key={recipe.id}
                       onClick={() => loadPreset(recipe.id)}
-                      className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-indigo-200 hover:shadow-md transition-all group text-left relative overflow-hidden"
+                      className="flex items-center justify-between p-6 rounded-3xl border border-black/5 bg-[#f5f2ed]/50 hover:bg-white hover:shadow-xl transition-all group text-left"
                    >
-                      <div className={clsx("absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b", 
-                           recipe.color === 'amber' && "from-amber-400 to-amber-600",
-                           recipe.color === 'rose' && "from-rose-400 to-rose-600",
-                           recipe.color === 'purple' && "from-purple-400 to-purple-600",
-                           recipe.color === 'sky' && "from-sky-400 to-sky-600"
-                      )}></div>
-                      <div className="pl-2">
-                          <div className="flex items-center gap-2 mb-1">
-                              <span className={clsx("text-sm font-bold font-display", 
-                                  recipe.color === 'amber' && "text-amber-700",
-                                  recipe.color === 'rose' && "text-rose-700",
-                                  recipe.color === 'purple' && "text-purple-700",
-                                  recipe.color === 'sky' && "text-sky-700",
-                              )}>
-                                  {recipe.name}
-                              </span>
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-100 w-fit">
+                      <div>
+                          <h4 className="text-xl font-display text-black mb-1 group-hover:text-black transition-colors">{recipe.name}</h4>
+                          <div className="text-[10px] font-accent font-bold text-black/20 uppercase tracking-widest">
                               {recipe.formula}
                           </div>
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-300 group-hover:text-indigo-500 group-hover:scale-110 transition-transform">
-                          <Microscope size={14} />
+                      <div className="w-12 h-12 rounded-2xl bg-white border border-black/5 flex items-center justify-center text-black/10 group-hover:text-black group-hover:scale-110 transition-all">
+                          <Microscope size={20} />
                       </div>
                    </button>
                ))}
