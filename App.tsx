@@ -95,11 +95,11 @@ const App: React.FC = () => {
         <div className="max-w-3xl w-full">
           <div className="flex items-center gap-3 mb-8">
             <BrainCircuit size={28} className="text-black" />
-            <h1 className="text-2xl font-display tracking-tight">Tactile Artifacts</h1>
+            <h1 className="text-2xl font-display tracking-tight">The Periodic Table of Cognitive Elements</h1>
           </div>
 
           <div className="bg-white rounded-[32px] p-10 md:p-16 shadow-2xl shadow-black/5 border border-black/5">
-            <h2 className="text-4xl md:text-5xl font-display mb-8">Welcome to Tactile Artifacts</h2>
+            <h2 className="text-4xl md:text-5xl font-display mb-8">Welcome to The Periodic Table of Cognitive Elements</h2>
             
             <div className="space-y-6 text-lg text-black/70 leading-relaxed">
               <p>
@@ -143,8 +143,8 @@ const App: React.FC = () => {
 
       <header className="max-w-[1600px] mx-auto px-8 py-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="flex flex-col">
-          <h1 className="text-7xl md:text-9xl font-display tracking-tight leading-[0.85]">
-            Tactile <span className="opacity-30">Artifacts.</span>
+          <h1 className="text-6xl md:text-8xl font-display tracking-tight leading-[0.85]">
+            The Periodic Table of <span className="opacity-30">Cognitive Elements.</span>
           </h1>
         </div>
       </header>
