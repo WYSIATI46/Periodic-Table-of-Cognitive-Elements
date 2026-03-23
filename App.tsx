@@ -4,10 +4,11 @@ import { CognitiveElement, ElementGroup } from './types';
 import ElementTile from './components/ElementTile';
 import ReactionChamber from './components/ReactionChamber';
 import ElementInspector from './components/ElementInspector';
-import { Database, FlaskConical } from 'lucide-react';
+import { Database, FlaskConical, BrainCircuit } from 'lucide-react';
 import clsx from 'clsx';
 
 const App: React.FC = () => {
+  const [hasStarted, setHasStarted] = useState(false);
   // History State
   const [history, setHistory] = useState<CognitiveElement[][]>([[]]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -87,6 +88,44 @@ const App: React.FC = () => {
     { id: 3, name: "Reactive", desc: "Short-term Response" },
     { id: 4, name: "Complex", desc: "Abstract / Systemic" }
   ];
+
+  if (!hasStarted) {
+    return (
+      <div className="min-h-screen bg-[#f5f2ed] text-[#1a1a1a] font-sans flex flex-col items-center justify-center p-8 editorial-grid">
+        <div className="max-w-3xl w-full">
+          <div className="flex items-center gap-3 mb-8">
+            <BrainCircuit size={28} className="text-black" />
+            <h1 className="text-2xl font-display tracking-tight">Tactile Artifacts</h1>
+          </div>
+
+          <div className="bg-white rounded-[32px] p-10 md:p-16 shadow-2xl shadow-black/5 border border-black/5">
+            <h2 className="text-4xl md:text-5xl font-display mb-8">Welcome to Tactile Artifacts</h2>
+            
+            <div className="space-y-6 text-lg text-black/70 leading-relaxed">
+              <p>
+                <strong className="text-black font-semibold">What is this?</strong> An interactive mapping of cognitive vulnerabilities, visualizing the interplay between systemic load and individual choice performance. This tool helps you document the ephemeral glass of institutional logic.
+              </p>
+              <p>
+                <strong className="text-black font-semibold">How it works:</strong> Click <strong>Begin</strong> to explore the interactive table. Select different cognitive elements to synthesize archetypes or diagnose real-world scenarios in the Reaction Chamber.
+              </p>
+              <p>
+                <strong className="text-black font-semibold">The Goal:</strong> To provide a tactile, visual way to map vulnerabilities, understand decision-making patterns, and generate behavioral science-informed interventions.
+              </p>
+            </div>
+
+            <div className="mt-12">
+              <button 
+                onClick={() => setHasStarted(true)}
+                className="px-10 py-4 bg-black text-white text-[11px] font-accent font-bold uppercase tracking-[0.2em] rounded-full hover:bg-black/80 transition-all shadow-xl hover:scale-105"
+              >
+                Begin
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] text-[#1a1a1a] font-sans overflow-x-hidden editorial-grid pb-24">
