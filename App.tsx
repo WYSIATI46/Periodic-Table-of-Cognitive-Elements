@@ -91,34 +91,7 @@ const App: React.FC = () => {
 
   if (!hasStarted) {
     return (
-      <div className="min-h-screen bg-[#f5f2ed] text-[#1a1a1a] font-sans flex flex-col items-center justify-center p-8 editorial-grid">
-      <a
-        href="https://yellowlights.ai"
-        style={{
-          position: 'fixed',
-          top: '16px',
-          left: '16px',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '8px 16px',
-          backgroundColor: '#ffffff',
-          border: '1px solid #e0ddd8',
-          borderRadius: '999px',
-          fontFamily: 'Inter, sans-serif',
-          fontSize: '12px',
-          fontWeight: '500',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase' as const,
-          color: '#1a1a1a',
-          textDecoration: 'none',
-          zIndex: 1000,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
-        }}
-      >
-        \u2190 Back to Yellowlights.ai
-      </a>
-        <div className="max-w-3xl w-full">
+      <div className="min-h-screen bg-[#f5f2ed] text-[#1a1a1a] font-sans flex flex-col items-center justify-center p-8 editorial-grid">        <div className="max-w-3xl w-full">
           <div className="flex items-center gap-3 mb-8">
             <BrainCircuit size={28} className="text-black" />
             <h1 className="text-2xl font-display tracking-tight">The Periodic Table of Cognitive Elements</h1>
