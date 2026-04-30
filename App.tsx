@@ -6,6 +6,7 @@ import ReactionChamber from './components/ReactionChamber';
 import ElementInspector from './components/ElementInspector';
 import { Database, FlaskConical, BrainCircuit } from 'lucide-react';
 import clsx from 'clsx';
+import { Analytics } from '@vercel/analytics/react';
 
 const App: React.FC = () => {
   const [hasStarted, setHasStarted] = useState(false);
@@ -232,6 +233,7 @@ const App: React.FC = () => {
              </div>
         </div>
       </main>
+      <Analytics />
     </div>
   );
 };
